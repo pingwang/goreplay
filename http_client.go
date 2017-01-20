@@ -61,7 +61,7 @@ func NewHTTPClient(baseURL string, config *HTTPClientConfig) *HTTPClient {
 
 	if config.Timeout == 0 {
 		config.Timeout = time.Second
-    }
+	}
 
 	config.ConnectionTimeout = config.Timeout
 
@@ -87,7 +87,7 @@ func (c *HTTPClient) Connect() (err error) {
 	c.Disconnect()
 
 	if !strings.Contains(c.host, ":") {
-		c.conn, err = net.DialTimeout("tcp", c.host + ":" + defaultPorts[c.scheme], c.config.ConnectionTimeout)
+		c.conn, err = net.DialTimeout("tcp", c.host+":"+defaultPorts[c.scheme], c.config.ConnectionTimeout)
 	} else {
 		c.conn, err = net.DialTimeout("tcp", c.host, c.config.ConnectionTimeout)
 	}
@@ -304,8 +304,12 @@ func (c *HTTPClient) Send(data []byte) (response []byte, err error) {
 		Debug("[HTTPClient] Received:", string(payload))
 	}
 
+	//log status code of the http response
+	status := payload[9:12]
+	statusStr := string(status)
+	Debug("[HTTPClient] Response status: " + statusStr)
+
 	if c.config.FollowRedirects > 0 && c.redirectsCount < c.config.FollowRedirects {
-		status := payload[9:12]
 
 		// 3xx requests
 		if status[0] == '3' {
