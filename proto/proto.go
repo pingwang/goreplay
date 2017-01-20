@@ -131,7 +131,13 @@ func header(payload []byte, name []byte) (value []byte, headerStart, headerEnd, 
 	}
 
 	valueStart = headerStart + len(name) + 1 // Skip ":" after header name
-	headerEnd = valueStart + bytes.IndexByte(payload[valueStart:], '\n')
+
+	lineEnd := bytes.IndexByte(payload[valueStart:], '\n')
+	if lineEnd == -1 {
+		headerEnd = len(payload)
+	} else {
+		headerEnd = valueStart + lineEnd
+	}
 
 	for valueStart < headerEnd { // Ignore empty space after ':'
 		if payload[valueStart] == ' ' {
@@ -141,7 +147,7 @@ func header(payload []byte, name []byte) (value []byte, headerStart, headerEnd, 
 		}
 	}
 
-	valueEnd = valueStart + bytes.IndexByte(payload[valueStart:], '\n')
+	valueEnd = headerEnd
 
 	if payload[headerEnd-1] == '\r' {
 		valueEnd--
