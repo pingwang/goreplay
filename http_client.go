@@ -316,7 +316,16 @@ func (c *HTTPClient) Send(data []byte) (response []byte, err error) {
 			c.redirectsCount++
 
 			location := proto.Header(payload, []byte("Location"))
-			redirectPayload := []byte("GET " + string(location) + " HTTP/1.1\r\n\r\n")
+			//if redirecting without other headers, the response code got is 400
+			locationStr := string(location)
+			redirectUrl, redirectErr := url.Parse(locationStr)
+			if redirectErr != nil {
+				return payload, err
+			}
+			if len(strings.TrimSpace(redirectUrl.Host)) > 0 {
+				data = proto.SetHeader(data, []byte("Host"), []byte(redirectUrl.Host))
+			}
+			redirectPayload := proto.SetPath(data, []byte(location[strings.Index(locationStr, redirectUrl.Host)+len(redirectUrl.Host):]))
 
 			if c.config.Debug {
 				Debug("[HTTPClient] Redirecting to: " + string(location))
